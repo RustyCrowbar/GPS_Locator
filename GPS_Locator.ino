@@ -1,5 +1,15 @@
 #include "GPS_Locator.h"
 
+void rainbowCircle()
+{
+  
+}
+
+bool satelitesAcquired()
+{
+  return false;
+}
+
 void setup()
 {
   Serial.begin(115200);
@@ -15,27 +25,20 @@ void setup()
   Wire.write(0x09); // Tell the HMC5883 to Continuously Measure
   Wire.write(0x1D); // Set the Register
   Wire.endTransmission();
+
+  //Wait for the GPS to acquire satelites
+  while (satelitesAcquired())
+    rainbowCircle();
 }
 
 void loop()
 {
-  for (uint8_t u = 0; u < NB_LEDS; u++)
-  {
-    leds[u] = 0xFF0000;
-    FastLED.show();
-    delay(100);
-  }
-  delay(1000);
-  for (uint8_t u = 0; u < NB_LEDS; u++)
-  {
-    leds[u] = 0x00FF00;
-    FastLED.show();
-    delay(100);
-  }
+  //Get data from GPS
 
+  //Get data from magnetometer
   int x, y, z; //triple axis data
 
-  //Tell the HMC what regist to begin writing data into
+  //Tell the HMC what register to begin writing data into
 
   Wire.beginTransmission(addr);
   Wire.write(0x00); //start with register 3.
@@ -60,6 +63,21 @@ void loop()
   Serial.print("Z Value: ");
   Serial.println(z);
   Serial.println();
+
+  //Display the direction
+  for (uint8_t u = 0; u < NB_LEDS; u++)
+  {
+    leds[u] = 0xFF0000;
+    FastLED.show();
+    delay(100);
+  }
+  delay(1000);
+  for (uint8_t u = 0; u < NB_LEDS; u++)
+  {
+    leds[u] = 0x00FF00;
+    FastLED.show();
+    delay(100);
+  }
 
   delay(500);
 }

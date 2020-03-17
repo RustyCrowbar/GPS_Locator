@@ -22,7 +22,7 @@ void loop() {
 
   int x, y, z; //triple axis data
 
-  //Tell the HMC what regist to begin writing data into
+  //Tell the HMC what register to begin writing data into
 
 
   Wire.beginTransmission(addr);
