@@ -1,13 +1,88 @@
 #include "GPS_Locator.h"
 
+TinyGPSPlus gps;
+
 void rainbowCircle()
 {
-  
+  uint8_t coeff = 0xff * 6 / NB_LEDS;
+  static uint8_t u;
+  static uint8_t tmp;
+  for (u = 0; u < (NB_LEDS / 6); u++) {
+      //0 - nb/6:            R: 255; G: 0 - 255; B: 0
+      leds[u] = CRGB(255, u * coeff, 0);
+  }
+  tmp = 0;
+  for (; u < (NB_LEDS / 3); u++) {
+      //nb/6 - 2nb/6:     R: 255 - 0; G: 255; B: 0
+      leds[u] = CRGB(255 - tmp * coeff, 255, 0);
+      tmp++;
+  }
+  tmp = 0;
+  for (; u < (NB_LEDS / 2); u++) {
+      //2nb/6 - 3nb/6:    R: 0; G: 255; B: 0 - 255
+      leds[u] = CRGB(0, 255, tmp * coeff);
+      tmp++;
+  }
+  tmp = 0;
+  for (; u < (2 * NB_LEDS / 3); u++) {
+      //3nb/6 - 4nb/6:    R: 0; G: 255 - 0; B: 255
+      leds[u] = CRGB(0, 255 - tmp * coeff, 255);
+      tmp++;
+  }
+  tmp = 0;
+  for (; u < (5 * NB_LEDS / 6); u++) {
+      //4nb/6 - 5nb/6:    R: 0 - 255; G: 0; B: 255
+      leds[u] = CRGB(tmp * coeff, 0, 255);
+      tmp++;
+  }
+  tmp = 0;
+  for (; u < NB_LEDS; u++) {
+      //5nb/6 - nb:       R: 255; G: 0; B: 255 - 0
+      leds[u] = CRGB(255, 0, 255 - tmp * coeff);
+      tmp++;
+  }
+
+  for (uint8_t u = 0; u < NB_LEDS; u++) { //The number of iterations actually doesn't have to be NB_LEDS
+    static CRGB tmp;
+    static CRGB *p;
+    static uint8_t index;
+    tmp = leds[NB_LEDS - 1];
+    for (index = NB_LEDS - 1; index > 0; index--) {
+        p = leds + index - 1;
+        leds[index] = *p;
+    }
+    leds[0] = tmp;
+    delay(10);
+  }
 }
 
 bool satelitesAcquired()
 {
-  return false;
+  return gps.location.isUpdated();
+}
+
+void showNorth(uint16_t heading)
+{
+  /*static uint8_t r[NB_LEDS] = 0;
+  static uint8_t g[NB_LEDS] = 0;
+  static uint8_t b[NB_LEDS] = 0;*/
+  heading += ANGLE_CORRECTION;
+  heading %= 360;
+  //Serial.print("Heading: ");
+  //Serial.println(heading);
+  uint16_t quadrant = 360 / (NB_LEDS - 1);
+  uint16_t min;
+  uint16_t max;
+  for (uint8_t u = 0; u < NB_LEDS - 1; u++) {
+    min = u * quadrant;
+    max = min + quadrant;
+    leds[u + 1] = CRGB(0, 255 * (min < heading && heading <= max), 0);
+    //Serial.print("u:"); Serial.print(u); Serial.print("; min:"); Serial.print(min); Serial.print("; max:"); Serial.println(max);
+  }
+  /*for (uint8_t u = 0; u < NB_LEDS; u++) {
+    leds[u] = CRGB(r[u], g[u], b[u]);
+  }*/
+  FastLED.show();
 }
 
 void setup()
@@ -26,6 +101,8 @@ void setup()
   Wire.write(0x1D); // Set the Register
   Wire.endTransmission();
 
+  //Initialize GPS
+
   //Wait for the GPS to acquire satelites
   while (satelitesAcquired())
     rainbowCircle();
@@ -36,7 +113,13 @@ void loop()
   //Get data from GPS
 
   //Get data from magnetometer
-  int x, y, z; //triple axis data
+  /*HMC6352.Wake();
+  int north = HMC6352.GetHeading();
+  HMC6352.Sleep();
+  Serial.println(north);*/
+  int x = 0;
+  int y = 0;
+  int z = 0; //triple axis data
 
   //Tell the HMC what register to begin writing data into
 
@@ -56,30 +139,35 @@ void loop()
   }
 
   // Show Values
-  Serial.print("X Value: ");
+  /*Serial.print("X Value: ");
   Serial.println(x);
   Serial.print("Y Value: ");
   Serial.println(y);
   Serial.print("Z Value: ");
   Serial.println(z);
-  Serial.println();
+  Serial.println();*/
+  
+  float heading=atan2(x, y)/0.0174532925;
+  if(heading < 0) heading+=360;
+  heading=360-heading; // N=0/360, E=90, S=180, W=270
 
   //Display the direction
-  for (uint8_t u = 0; u < NB_LEDS; u++)
+  showNorth(heading);
+  /*for (uint8_t u = 0; u < NB_LEDS; u++)
   {
     leds[u] = 0xFF0000;
     FastLED.show();
     delay(100);
   }
-  delay(1000);
+  delay(200);
   for (uint8_t u = 0; u < NB_LEDS; u++)
   {
     leds[u] = 0x00FF00;
     FastLED.show();
     delay(100);
-  }
+  }*/
 
-  delay(500);
+  delay(100);
 }
 
 /*
