@@ -60,13 +60,13 @@ bool satelitesAcquired()
   while (gpsSerial.available() > 0)
   {
     //delay(1);
-    auto read = gpsSerial.read();
+    char read = gpsSerial.read();
     gps.encode(read);
-    Serial.print("Got data from the GPS: '");
+    //Serial.print("Got data from the GPS: '");
     Serial.print(read);
-    Serial.println("'");
-  Serial.println(gps.location.lat(), 6); // Latitude in degrees (double)
-  Serial.println(gps.location.lng(), 6); // Longitude in degrees (double)
+    //Serial.println("'");
+  //Serial.println(gps.location.lat(), 6); // Latitude in degrees (double)
+  //Serial.println(gps.location.lng(), 6); // Longitude in degrees (double)
   //Serial.print(gps.location.rawLat().negative ? "-" : "+");
   //Serial.println(gps.location.rawLat().deg); // Raw latitude in whole degrees
   //Serial.println(gps.location.rawLat().billionths);// ... and billionths (u16/u32)
