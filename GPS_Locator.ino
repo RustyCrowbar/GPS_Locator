@@ -62,7 +62,6 @@ bool satelitesAcquired()
     //delay(1);
     char read = gpsSerial.read();
     gps.encode(read);
-    //Serial.print("Got data from the GPS: '");
     Serial.print(read);
     //Serial.println("'");
   //Serial.println(gps.location.lat(), 6); // Latitude in degrees (double)
@@ -145,10 +144,11 @@ void setup()
   //Initialize GPS
   gpsSerial.begin(9600); // connect gps sensor
 
+  Serial.println("========== Printing raw NMEA data ==========");
   //Wait for the GPS to acquire satelites
   while (!satelitesAcquired())
     rainbowCircle();
-  Serial.println("Acquired a position!");
+  Serial.println("========== Acquired a position! ==========");
   for (uint8_t u = 0; u < NB_LEDS; u++)
     leds[u] = green_led;
   FastLED.show();
