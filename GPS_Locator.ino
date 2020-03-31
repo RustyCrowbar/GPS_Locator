@@ -62,7 +62,7 @@ bool satelitesAcquired()
     //delay(1);
     char read = gpsSerial.read();
     gps.encode(read);
-    Serial.print(read);
+    //Serial.print(read);
     //Serial.println("'");
   //Serial.println(gps.location.lat(), 6); // Latitude in degrees (double)
   //Serial.println(gps.location.lng(), 6); // Longitude in degrees (double)
@@ -96,10 +96,11 @@ bool satelitesAcquired()
   //Serial.println(gps.satellites.value()); // Number of satellites in use (u32)
   //Serial.println(gps.hdop.value()); // Horizontal Dim. of Precision (100ths-i32)
   }
+  Serial.print(".");
   return gps.location.isUpdated();
 }
 
-void showNorth(uint16_t heading)
+void showHeading(uint16_t heading)
 {
   /*static uint8_t r[NB_LEDS] = 0;
   static uint8_t g[NB_LEDS] = 0;
@@ -144,7 +145,7 @@ void setup()
   //Initialize GPS
   gpsSerial.begin(9600); // connect gps sensor
 
-  Serial.println("========== Printing raw NMEA data ==========");
+  Serial.println("========== Waiting for the GPS to acquire a position... ==========");
   //Wait for the GPS to acquire satelites
   while (!satelitesAcquired())
     rainbowCircle();
@@ -194,12 +195,42 @@ void loop()
   Serial.println(z);
   Serial.println();*/
   
-  float heading=atan2(x, y)/0.0174532925;
-  if(heading < 0) heading+=360;
-  heading=360-heading; // N=0/360, E=90, S=180, W=270
+  float north = atan2(x, y) / 0.0174532925;
+  if(north < 0)
+    north+=360;
+  north = 360 - north; // N=0/360, E=90, S=180, W=270
 
-  //Display the direction
-  showNorth(heading);
+  //Display north
+  showHeading(north);
+  static double distanceToLoc = 0;
+  static uint16_t dist = 0;
+  static double courseToLoc = 0;
+  if (gps.location.isValid())
+  {
+    distanceToLoc = TinyGPSPlus::distanceBetween(gps.location.lat(), gps.location.lng(), Loc_Lat[CurrDest], Loc_Lon[CurrDest]);
+    courseToLoc = TinyGPSPlus::courseTo(gps.location.lat(), gps.location.lng(), Loc_Lat[CurrDest], Loc_Lon[CurrDest]);
+    dist = log10(distanceToLoc);
+    Serial.print("distanceToLoc: "); Serial.println(distanceToLoc);
+    Serial.print("dist: "); Serial.println(dist);
+    
+    Serial.print("courseToLoc: "); Serial.println(courseToLoc);
+    Serial.print("north: "); Serial.println(north);
+    //dircourse = north - courseToLoc;
+  }
+  else
+    Serial.println("Got an invalid position from the GPS module.");
+
+  static uint16_t loopCnt = 0;
+  leds[NB_LEDS - 1] = off_led;
+  if (!loopCnt)
+  {
+    loopCnt = dist;
+    leds[NB_LEDS - 1] = red_led;
+    if (dist <= DIST_MEDIUM)
+      leds[NB_LEDS - 1] = orange_led;
+    if (dist <= DIST_CLOSE)
+      leds[NB_LEDS - 1] = green_led;
+  }
   /*for (uint8_t u = 0; u < NB_LEDS; u++)
   {
     leds[u] = 0xFF0000;
@@ -213,7 +244,7 @@ void loop()
     FastLED.show();
     delay(100);
   }*/
-
+  FastLED.show();
   delay(100);
 }
 
