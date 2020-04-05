@@ -57,6 +57,7 @@ void rainbowCircle()
 
 bool satelitesAcquired()
 {
+  static uint32_t sats = 42;
   while (gpsSerial.available() > 0)
   {
     //delay(1);
@@ -95,6 +96,14 @@ bool satelitesAcquired()
   //Serial.println(gps.altitude.feet()); // Altitude in feet (double)
   //Serial.println(gps.satellites.value()); // Number of satellites in use (u32)
   //Serial.println(gps.hdop.value()); // Horizontal Dim. of Precision (100ths-i32)
+  }
+  uint32_t newSats = gps.satellites.value();
+  if (sats != newSats)
+  {
+    sats = newSats;
+    Serial.println("");
+    Serial.print("Sats: ");
+    Serial.println(sats);
   }
   Serial.print(".");
   return gps.location.isUpdated();
@@ -145,7 +154,7 @@ void setup()
   //Initialize GPS
   gpsSerial.begin(9600); // connect gps sensor
 
-  Serial.println("========== Waiting for the GPS to acquire a position... ==========");
+  Serial.print("========== Waiting for the GPS to acquire a position... ==========");
   //Wait for the GPS to acquire satelites
   while (!satelitesAcquired())
     rainbowCircle();
